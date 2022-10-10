@@ -8,7 +8,7 @@ class UserAdmin(admin.ModelAdmin):
                     'username',
                     'email',
                     'first_name',
-                    'last_name'
+                    'last_name',
                     'is_active',
                     'last_login'
                     )
