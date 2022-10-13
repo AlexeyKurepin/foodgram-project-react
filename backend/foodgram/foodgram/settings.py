@@ -4,7 +4,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = '4ylfwd4@x)dq3-s*l+8g02#033n53^x)^2=!hrk46t@(&-376s'
 
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['cc-api-data.adobe.io', '127.0.0.1']
 
@@ -91,7 +91,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-AUTH_USER_MODEL = "users.User"
+AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [

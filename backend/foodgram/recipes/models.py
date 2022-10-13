@@ -57,25 +57,6 @@ class Ingredient(models.Model):
         return self.name
 
 
-class IngredientRecipe(models.Model):
-    ingredient = models.ForeignKey(Ingredient,
-                                   on_delete=models.CASCADE,
-                                   related_name='ingredients')
-    amount = models.IntegerField(
-        validators=[
-            MinValueValidator(1, 'Количество не может быть меньше 1.'),
-        ],
-        verbose_name='Количество'
-    )
-
-    class Meta:
-        verbose_name = 'Ингредиент в рецепте'
-        verbose_name_plural = 'Ингредиенты в рецепте'
-
-    def __str__(self):
-        return f'{self.ingredient}: {self.amount}'
-
-
 class Recipe(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.CASCADE,
@@ -112,7 +93,8 @@ class Recipe(models.Model):
     )
 
     ingredients = models.ManyToManyField(
-        IngredientRecipe,
+        Ingredient,
+        through='IngredientRecipe',
         verbose_name='Ингредиенты',
         related_name='recipes',
     )
@@ -129,6 +111,29 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class IngredientRecipe(models.Model):
+    ingredient = models.ForeignKey(Ingredient,
+                                   on_delete=models.CASCADE,
+                                   related_name='ingredients')
+    recipe = models.ForeignKey(Recipe,
+                               on_delete=models.CASCADE,
+                               related_name='recipe_ingredients',
+                               verbose_name='Рецепт')
+    amount = models.IntegerField(
+        validators=[
+            MinValueValidator(1, 'Количество не может быть меньше 1.'),
+        ],
+        verbose_name='Количество'
+    )
+
+    class Meta:
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецепте'
+
+    def __str__(self):
+        return f'{self.ingredient}: {self.amount}'
 
 
 class Favorite(models.Model):
@@ -153,6 +158,9 @@ class Favorite(models.Model):
             name='unique_user_fav_recipe'
         )
 
+    def __str__(self):
+        return f'{self.user} добавил {self.recipe} в избранное'
+
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(
@@ -175,3 +183,6 @@ class ShoppingCart(models.Model):
             fields=['user', 'recipe'],
             name='unique_user_cart_recipe'
         )
+
+    def __str__(self):
+        return f'{self.user} добавил {self.recipe} в список покупок'

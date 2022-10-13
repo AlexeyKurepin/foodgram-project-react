@@ -4,6 +4,13 @@ from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Tag)
 
 
+class IngredientRecipeInline(admin.TabularInline):
+    model = IngredientRecipe
+    fields = ('ingredient', 'amount')
+    min_num = 1
+    extra = 0
+
+
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('pk',
                     'name',
@@ -14,6 +21,7 @@ class RecipeAdmin(admin.ModelAdmin):
     search_fields = ('name', 'author', 'author__first_name', 'author__email')
     list_filter = ('tags',)
     empty_value_display = '-пусто-'
+    inlines = (IngredientRecipeInline,)
 
     def quantity_in_favorites(self, obj):
         return obj.favorite.count()

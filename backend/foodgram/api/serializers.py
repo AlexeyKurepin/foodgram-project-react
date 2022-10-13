@@ -125,7 +125,7 @@ class RecipeCreateSerializer(RecipeSerializer):
             current_ingredient = get_object_or_404(
                 Ingredient, pk=ingredient['ingredient']['id'])
             current_amount = ingredient['amount']
-            new = IngredientRecipe.objects.create(
+            new = IngredientRecipe.objects.bulk_create(
                 ingredient=current_ingredient,
                 amount=current_amount)
             recipe.ingredients.add(new)
@@ -148,7 +148,7 @@ class RecipeCreateSerializer(RecipeSerializer):
             current_ingredient = get_object_or_404(
                 Ingredient, pk=ingredient['ingredient']['id'])
             current_amount = ingredient['amount']
-            update = IngredientRecipe.objects.create(
+            update = IngredientRecipe.objects.bulk_create(
                 ingredient=current_ingredient,
                 amount=current_amount)
             instance.ingredients.add(update)
