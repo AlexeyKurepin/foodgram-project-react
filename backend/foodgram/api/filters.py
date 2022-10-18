@@ -5,9 +5,9 @@ from recipes.models import Recipe, Tag
 
 class RecipeFilter(django_filters.FilterSet):
     tags = django_filters.ModelMultipleChoiceFilter(
-        field_name='tags__slug',
+        field_name="tags__slug",
         queryset=Tag.objects.all(),
-        to_field_name='slug', )
+        to_field_name="slug",)
     is_in_favorite = django_filters.NumberFilter(method='get_is_in_favorite')
     is_in_shopping_cart = django_filters.NumberFilter(
         method='get_is_in_shopping_cart')

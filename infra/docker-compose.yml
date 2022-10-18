@@ -12,7 +12,7 @@ services:
     image: kurepin83/foodgram-backend:latest
     restart: always
     volumes:
-      - static_value:/app/staticfiles/
+      - static_value:/app/static/
       - media_value:/app/media/
     env_file:
       - ./.env

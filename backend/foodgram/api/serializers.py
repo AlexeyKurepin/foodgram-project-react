@@ -4,6 +4,7 @@ from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import Ingredient, IngredientRecipe, Recipe, Tag
 from users.models import User
@@ -36,6 +37,13 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ('__all__')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Ingredient.objects.all(),
+                fields=('name', 'measurement_unit'),
+                message=('Такой ингредиент уже есть базе.')
+            )
+        ]
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -45,7 +53,10 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source='ingredient.id')
+    id = serializers.PrimaryKeyRelatedField(
+        queryset=Ingredient.objects.all(),
+        source='ingredient.id'
+    )
     name = serializers.CharField(source='ingredient.name', read_only=True)
     measurement_unit = serializers.CharField(
         source='ingredient.measurement_unit', read_only=True)
@@ -53,12 +64,11 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = IngredientRecipe
         fields = ('id', 'name', 'measurement_unit', 'amount')
-
-    def validate_amount(self, value):
-        if value <= 0:
-            raise serializers.ValidationError(
-                'Количество не может быть меньше 1.')
-        return value
+        extra_kwargs = {
+            'amount': {
+                'min_value': None,
+            },
+        }
 
 
 class Base64ImageField(serializers.ImageField):
@@ -73,8 +83,10 @@ class Base64ImageField(serializers.ImageField):
 
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(read_only=True, many=True)
-    ingredients = IngredientRecipeSerializer(many=True)
-    author = CustomUserSerializer(read_only=True)
+    ingredients = IngredientRecipeSerializer(many=True,
+                                             source='recipe_ingredients')
+    author = CustomUserSerializer(read_only=True,
+                                  default=serializers.CurrentUserDefault())
     image = Base64ImageField()
     is_in_favorite = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -109,26 +121,56 @@ class RecipeCreateSerializer(RecipeSerializer):
         fields = ('id', 'tags', 'author', 'ingredients', 'is_in_favorite',
                   'is_in_shopping_cart', 'name', 'image', 'text',
                   'cooking_time')
+        extra_kwargs = {
+            'cooking_time': {
+                'min_value': None,
+            },
+        }
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Recipe.objects.all(),
+                fields=('author', 'name'),
+                message='Вы уже создавали рецепт с таким названием.'
+            )
+        ]
 
-    def validate_cooking_time(self, value):
-        if value <= 0:
-            raise serializers.ValidationError(
-                'Время приготовления не может быть менее минуты.')
-        return value
+    @staticmethod
+    def save_ingredients(recipe, ingredients):
+        ingredients_list = []
+        for ingredient in ingredients:
+            current_ingredient = ingredient['ingredient']['id']
+            current_amount = ingredient['amount']
+            ingredients_list.append(
+                IngredientRecipe(
+                    recipe=recipe,
+                    ingredient=current_ingredient,
+                    amount=current_amount))
+        IngredientRecipe.objects.bulk_create(ingredients_list)
+
+    def validate(self, data):
+        if data['cooking_time'] <= 0:
+            raise serializers.ValidationError('Время приготовления не может '
+                                              'быть менее минуты.')
+
+        ingredients_list = []
+        for ingredient in data['recipe_ingredients']:
+            if ingredient['amount'] <= 0:
+                raise serializers.ValidationError('Количество не может'
+                                                  ' быть меньше 1.')
+            ingredients_list.append(ingredient['ingredient']['id'])
+
+        if len(ingredients_list) > len(set(ingredients_list)):
+            raise serializers.ValidationError('Ингредиенты не должны'
+                                              ' повторяться.')
+        return data
 
     def create(self, validated_data):
-        ingredients = validated_data.pop('ingredients')
+        author = self.context['request'].user
+        ingredients = validated_data.pop('recipe_ingredients')
         tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(**validated_data)
+        recipe = Recipe.objects.create(**validated_data, author=author)
         recipe.tags.add(*tags)
-        for ingredient in ingredients:
-            current_ingredient = get_object_or_404(
-                Ingredient, pk=ingredient['ingredient']['id'])
-            current_amount = ingredient['amount']
-            new = IngredientRecipe.objects.bulk_create(
-                ingredient=current_ingredient,
-                amount=current_amount)
-            recipe.ingredients.add(new)
+        self.save_ingredients(recipe, ingredients)
         return recipe
 
     def update(self, instance, validated_data):
@@ -137,22 +179,13 @@ class RecipeCreateSerializer(RecipeSerializer):
         instance.image = validated_data.get('image', instance.image)
         instance.cooking_time = validated_data.get(
             'cooking_time', instance.cooking_time)
-
-        ingredients = validated_data.pop('ingredients')
+        ingredients = validated_data.pop('recipe_ingredients')
         tags = validated_data.pop('tags')
         instance.tags.clear()
         instance.tags.add(*tags)
         instance.ingredients.clear()
-
-        for ingredient in ingredients:
-            current_ingredient = get_object_or_404(
-                Ingredient, pk=ingredient['ingredient']['id'])
-            current_amount = ingredient['amount']
-            update = IngredientRecipe.objects.bulk_create(
-                ingredient=current_ingredient,
-                amount=current_amount)
-            instance.ingredients.add(update)
-
+        recipe = instance
+        self.save_ingredients(recipe, ingredients)
         instance.save()
         return instance
 
@@ -165,12 +198,10 @@ class MiniRecipeSerializer(RecipeSerializer):
 
 class SubscriptionSerializer(CustomUserSerializer):
     recipes = MiniRecipeSerializer(read_only=True, many=True)
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(source='recipes.count',
+                                             read_only=True)
 
     class Meta:
         model = User
         fields = ('id', 'email', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()

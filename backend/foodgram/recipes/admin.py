@@ -15,7 +15,7 @@ class RecipeAdmin(admin.ModelAdmin):
     list_display = ('pk',
                     'name',
                     'author',
-                    'quantity_in_favorites',
+                    'qty_of_favorites',
                     )
     list_editable = ('name', 'author')
     search_fields = ('name', 'author', 'author__first_name', 'author__email')
@@ -23,10 +23,10 @@ class RecipeAdmin(admin.ModelAdmin):
     empty_value_display = '-пусто-'
     inlines = (IngredientRecipeInline,)
 
-    def quantity_in_favorites(self, obj):
+    def qty_of_favorites(self, obj):
         return obj.favorite.count()
 
-    quantity_in_favorites.short_description = 'Количество в избранном'
+    qty_of_favorites.short_description = 'Количество в избранном'
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -48,16 +48,12 @@ class IngredientAdmin(admin.ModelAdmin):
 
 class IngredientRecipeAdmin(admin.ModelAdmin):
     list_display = ('pk',
+                    'recipe',
                     'ingredient',
                     'amount',
-                    'measurement_unit',
                     )
     list_editable = ('ingredient', 'amount')
     search_fields = ('ingredient',)
-
-    @staticmethod
-    def measurement_unit(obj):
-        return obj.ingredient.measurement_unit
 
 
 class FavoriteAndCartAdmin(admin.ModelAdmin):
@@ -66,7 +62,7 @@ class FavoriteAndCartAdmin(admin.ModelAdmin):
                     'recipe',
                     )
     list_editable = ('user', 'recipe',)
-    list_filter = ('user', 'recipe')
+    list_filter = ('user',)
 
 
 admin.site.register(Recipe, RecipeAdmin)

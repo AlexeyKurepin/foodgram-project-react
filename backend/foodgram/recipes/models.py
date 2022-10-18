@@ -54,7 +54,7 @@ class Ingredient(models.Model):
         ]
 
     def __str__(self):
-        return self.name
+        return f'{self.name}, {self.measurement_unit}'
 
 
 class Recipe(models.Model):
@@ -97,6 +97,7 @@ class Recipe(models.Model):
         through='IngredientRecipe',
         verbose_name='Ингредиенты',
         related_name='recipes',
+        blank=False
     )
 
     created = models.DateTimeField(
@@ -106,34 +107,16 @@ class Recipe(models.Model):
 
     class Meta:
         ordering = ['-created']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'name'],
+                name='unique_author_name')
+        ]
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
     def __str__(self):
         return self.name
-
-
-class IngredientRecipe(models.Model):
-    ingredient = models.ForeignKey(Ingredient,
-                                   on_delete=models.CASCADE,
-                                   related_name='ingredients')
-    recipe = models.ForeignKey(Recipe,
-                               on_delete=models.CASCADE,
-                               related_name='recipe_ingredients',
-                               verbose_name='Рецепт')
-    amount = models.IntegerField(
-        validators=[
-            MinValueValidator(1, 'Количество не может быть меньше 1.'),
-        ],
-        verbose_name='Количество'
-    )
-
-    class Meta:
-        verbose_name = 'Ингредиент в рецепте'
-        verbose_name_plural = 'Ингредиенты в рецепте'
-
-    def __str__(self):
-        return f'{self.ingredient}: {self.amount}'
 
 
 class Favorite(models.Model):
@@ -153,10 +136,11 @@ class Favorite(models.Model):
     class Meta:
         verbose_name = 'избранное'
         verbose_name_plural = 'избранное'
-        models.UniqueConstraint(
-            fields=['user', 'recipe'],
-            name='unique_user_fav_recipe'
-        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_user_fav_recipe')
+        ]
 
     def __str__(self):
         return f'{self.user} добавил {self.recipe} в избранное'
@@ -179,10 +163,35 @@ class ShoppingCart(models.Model):
     class Meta:
         verbose_name = 'список покупок'
         verbose_name_plural = 'списки покупок'
-        models.UniqueConstraint(
-            fields=['user', 'recipe'],
-            name='unique_user_cart_recipe'
-        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_user_cart_recipe')
+        ]
 
     def __str__(self):
         return f'{self.user} добавил {self.recipe} в список покупок'
+
+
+class IngredientRecipe(models.Model):
+    recipe = models.ForeignKey(Recipe,
+                               on_delete=models.CASCADE,
+                               related_name='recipe_ingredients',
+                               verbose_name='Рецепт')
+    ingredient = models.ForeignKey(Ingredient,
+                                   on_delete=models.CASCADE,
+                                   related_name='recipe_ingredients',
+                                   verbose_name='Ингредиент')
+    amount = models.IntegerField(
+        validators=[
+            MinValueValidator(1, 'Количество не может быть меньше 1.'),
+        ],
+        verbose_name='Количество'
+    )
+
+    class Meta:
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецепте'
+
+    def __str__(self):
+        return f'{self.ingredient}: {self.amount}'
