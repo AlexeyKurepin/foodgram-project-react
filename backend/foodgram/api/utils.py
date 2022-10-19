@@ -1,8 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import serializers
-
 from recipes.models import Favorite, ShoppingCart
+from rest_framework import serializers
 from users.models import Subscription
 
 
