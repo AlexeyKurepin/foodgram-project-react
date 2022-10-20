@@ -19,6 +19,11 @@ services:
     depends_on:
       - db
 
+  frontend:
+    image: kurepin83/foodgram-frontend:latest
+    volumes:
+      - ../frontend/:/app/result_build/
+
   nginx:
     image: nginx:1.19.3
     ports:
