@@ -5,4 +5,5 @@ login: kurepin@tut.by
 
 password: kurepin
 
-https://github.com/kurepin83/foodgram-project-react/actions/workflows/main.yml/badge.svg
+![foodgram workflow status](https://github.com/AlexeyKurepin/foodgram-project-react/actions/workflows/main.yml/badge.svg)
+
