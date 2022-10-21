@@ -67,7 +67,7 @@ docker-compose exec backend python manage.py loaddata dump.json
 ```
 __После запуска проект будут доступен по адресу: http://localhost/__
 
-####Автор проекта:
+#### Автор проекта:
 
 <a href= "https://github.com/AlexeyKurepin">__Алексей Курепин__<a/>
 
