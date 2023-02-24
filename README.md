@@ -36,7 +36,7 @@ __Запустить проект в контейнерах Docker:__
 cd infra
 touch .env
 ```
-запонить его данными:
+заполнить его данными:
 ```angular2html
 nano .env
 ```
@@ -66,10 +66,10 @@ docker-compose exec backend python manage.py createsuperuser
 ```
 docker-compose exec backend python manage.py collectstatic --no-input
 ```
-заполненить базу данными:
+заполнить базу данными:
 ```angular2html
 docker-compose exec backend python manage.py loaddata ingredients.json
 ```
-__После запуска проект будут доступен по адресу: http://localhost/__
+__После запуска проект будет доступен по адресу: http://localhost/__
 
 #### Автор проекта:  <a href= "https://github.com/AlexeyKurepin">__Алексей Курепин__<a/>
