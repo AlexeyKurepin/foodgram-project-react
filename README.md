@@ -68,7 +68,7 @@ docker-compose exec backend python manage.py collectstatic --no-input
 ```
 заполненить базу данными:
 ```angular2html
-docker-compose exec backend python manage.py loaddata dump.json
+docker-compose exec backend python manage.py loaddata ingredients.json
 ```
 __После запуска проект будут доступен по адресу: http://localhost/__
 
