@@ -60,7 +60,7 @@ docker-compose exec backend python manage.py migrate
 ```
 создать суперпользователя:
 ```
-docker-compose exec bakend python manage.py createsuperuser
+docker-compose exec backend python manage.py createsuperuser
 ```
 собрать статику:
 ```
